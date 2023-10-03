@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 
-
 def check_cut(p1,p2,o,r):
     v = (p2[0]-p1[0], p2[1]-p1[1])
     #(p1[0] + t*v[0] - obstacle[0][0])**2 + (p1[1] + t*v[1] - obstacle[0][1])**2 = radius[0]**2
@@ -48,11 +47,6 @@ def find_point_cut(point,o,r):
         plt.plot([point1[0], point[0]], [point1[1], point[1]], linestyle='-', color='green')
     if flag2 == 0:
         plt.plot([point2[0], point[0]], [point2[1], point[1]], linestyle='-', color='green')
-
-def find_outer_cut():
-    a=1
-def find_inner_cut():
-    a=1
 
     
 obstacle = [(56,30),(62,38),(74,28),(37,99),(55,11),(67,12),(43,44),(78,71),(22,20)]
@@ -156,4 +150,3 @@ for i in range(0,num):
 plt.xlim(0,100)
 plt.ylim(0,100)                        
 plt.show()
-
