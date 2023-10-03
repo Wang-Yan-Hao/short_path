@@ -7,7 +7,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.join(current_dir, '..')
 sys.path.append(parent_dir)
 
-from utility import intersect, draw_circles
+from utility import intersect, draw_circles, calculate_distance
 from obstacle import middle_point_list, radius_list, s_start, s_goal
 
 # Globval variable
@@ -25,7 +25,8 @@ obstacle_node = [[] for _ in range(num)]  # 同一個障礙物上面的點會存
 point_index = 2  # 目前總共的點
 
 
-def intersect_with_all_obstacles(p1, p2):  # 檢查兩點是否有跟所有障礙物接觸過
+def intersect_with_all_obstacles(p1, p2, not_include_p1=False, p1_obstacle_index=-1, p2_obstacle_index=-1):  # 檢查兩點是否有跟所有障礙物接觸過
+    global point_index
     flag = 0
     for i in range(0, num):
         ans = intersect(p1, p2, obstacle[i], radius[i])
@@ -34,11 +35,48 @@ def intersect_with_all_obstacles(p1, p2):  # 檢查兩點是否有跟所有障�
             break
     if flag == 0:  # 沒有跟任何障礙物接觸
         plt.plot([p2[0], p1[0]], [p2[1], p1[1]], linestyle='-', color='green')
+
+        if not_include_p1:  # p1 是起點或者終點
+            path_len = calculate_distance(p1, p2)
+
+            # 新加的點設個對應的 index
+            if p2 not in point_map:
+                point_map[p2] = point_index
+                point_index = point_index + 1
+                graph.append([])  # graph 要為新的點加一個 list
+
+            p1_index = point_map[p1]
+            p2_index = point_map[p2]
+            
+            graph[p1_index].append((point_index-1, path_len))  # p1 加上 p2
+            graph[p2_index].append((p1_index, path_len))  # p2 加上 p1
+            obstacle_node[p2_obstacle_index].append(p2)  # 第 p2_obstacle_index 個 obstacle 要加上 p2
+        else:
+            path_len = calculate_distance(p1, p2)
+
+            # 新加的點設個對應的 index
+            if p2 not in point_map:
+                point_map[p2] = point_index
+                point_index = point_index + 1
+                graph.append([])  # graph 要為新的點加一個 list
+            if p1 not in point_map:
+                point_map[p1] = point_index
+                point_index = point_index + 1
+                graph.append([])  # graph 要為新的點加一個 list
+
+            p1_index = point_map[p1]
+            p2_index = point_map[p2]
+
+            p1_index = point_map[p1]
+            graph[p1_index].append((point_index-1, path_len))  # p1 加上 p2
+            graph[p2_index].append((p1_index, path_len))  # p2 加上 p1
+            obstacle_node[p2_obstacle_index].append(p2)  # 第 p2_obstacle_index 個 obstacle 要加上 p2
+            obstacle_node[p1_obstacle_index].append(p1)  # 第 p1_obstacle_index 個 obstacle 要加上 p1
         return 1
     return 0
 
 
-def find_point_cut(point, o, r):  # 找點跟圓的切線
+def find_point_cut(point, o, r, obstacle_index):  # 找點跟圓的切線
     dis = math.sqrt((point[0] - o[0])**2 + (point[1] - o[1])**2)
     theta = math.atan((point[1] - o[1])/(point[0] - o[0]))
     theta1 = math.asin(r/dis)
@@ -47,8 +85,8 @@ def find_point_cut(point, o, r):  # 找點跟圓的切線
     point2 = (o[0] + r*math.cos(theta - theta1 - math.pi/2),
               o[1] + r*math.sin(theta - theta1 - math.pi/2))
 
-    intersect_with_all_obstacles(point, point1)
-    intersect_with_all_obstacles(point, point2)
+    intersect_with_all_obstacles(point, point1, not_include_p1=True, p2_obstacle_index=obstacle_index)
+    intersect_with_all_obstacles(point, point2, not_include_p1=True, p2_obstacle_index=obstacle_index)
 
 
 # 畫起點跟終點
@@ -60,8 +98,8 @@ draw_circles(obstacle, radius)
 
 # 找點切線
 for i in range(0, num):
-    find_point_cut(start_node, obstacle[i], radius[i])
-    find_point_cut(end_node, obstacle[i], radius[i])
+    find_point_cut(start_node, obstacle[i], radius[i], i)
+    find_point_cut(end_node, obstacle[i], radius[i], i)
 
 # 找 2 圓切線
 for i in range(0, num):
