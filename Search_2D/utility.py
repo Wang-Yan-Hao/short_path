@@ -150,9 +150,28 @@ def dijkstra(graph, start, end):
 
 
 # 畫圓形障礙物
-
-
 def draw_circles(obstacle, radius):
     for i in range(0, len(obstacle)):
         circle = plt.Circle(obstacle[i], radius[i], fill=False)
         plt.gca().add_patch(circle)
+
+
+def calculate_two_point_distance_in_circle(p1, p2, center, radius):
+    # Calculate the distance between the center of the circle and the two points
+    d1 = math.sqrt((p1[0] - center[0])**2 + (p1[1] - center[1])**2)
+    d2 = math.sqrt((p2[0] - center[0])**2 + (p2[1] - center[1])**2)
+    
+    # Calculate the angles formed by the two points at the center
+    angle1 = math.atan2(p1[1] - center[1], p1[0] - center[0])
+    angle2 = math.atan2(p2[1] - center[1], p2[0] - center[0])
+    
+    # Ensure angles are between 0 and 2*pi
+    if angle1 < 0:
+        angle1 += 2 * math.pi
+    if angle2 < 0:
+        angle2 += 2 * math.pi
+    
+    # Calculate the arc length between the two points
+    arc_length = abs(angle2 - angle1) * radius
+
+    return arc_length
