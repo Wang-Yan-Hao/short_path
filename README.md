@@ -1,2 +1,2 @@
-# short_path
-Short path through lot of circle obstacles
+# shortest_path
+Shortest path through lots of circle obstacles
