@@ -155,7 +155,7 @@ def dijkstra(graph, start_node, end_node):
     plt.plot(path_x, path_y, linestyle='-', color='red', label='Shortest Path')
 
     # plt.show()
-    return path
+    return (path, shortest_path)
 
 # 畫起點跟終點
 plt.scatter(start_node[0], start_node[1], color='red', marker='o')
