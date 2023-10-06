@@ -85,10 +85,65 @@ def find_point_cut(point, o, r, obstacle_index):  # 找點跟圓的切線
               o[1] + r*math.sin(theta + theta1 + math.pi/2))
     point2 = (o[0] + r*math.cos(theta - theta1 - math.pi/2),
               o[1] + r*math.sin(theta - theta1 - math.pi/2))
-
+    #print(point,point1,point2)
     intersect_with_all_obstacles(point, point1, not_include_p1=True, p2_obstacle_index=obstacle_index)
     intersect_with_all_obstacles(point, point2, not_include_p1=True, p2_obstacle_index=obstacle_index)
 
+def find_outer_cut(pointi, pointj, radiusi, radiusj, dis):
+
+    rad_diff = radiusj - radiusi
+    if pointj[0] - pointi[0] == 0:
+        theta0 = math.pi/2
+    else:
+        theta0 = math.atan((pointj[1] - pointi[1])/(pointj[0] - pointi[0]))  # 與水平線夾角
+    if dis >  rad_diff:
+        theta1 = math.asin(rad_diff/dis)  # 2圓間的角度
+        theta2 = theta1 + theta0 + math.pi/2
+        theta3 = theta0 - theta1 - math.pi/2
+        if (pointi[0] - pointj[0] > 0):
+            theta2 = theta2 + math.pi
+            theta3 = theta3 + math.pi
+        # 四個可能的切點
+        point1 = (pointi[0] + radiusi * math.cos(theta2),
+                pointi[1] + radiusi * math.sin(theta2))
+        point2 = (pointj[0] + radius[j] * math.cos(theta2),
+                pointj[1] + radius[j] * math.sin(theta2))
+        point3 = (pointi[0] + radiusi * math.cos(theta3),
+                pointi[1] + radiusi * math.sin(theta3))
+        point4 = (pointj[0] + radiusj * math.cos(theta3),
+                pointj[1] + radiusj * math.sin(theta3))
+        intersect_with_all_obstacles(point1, point2)
+        intersect_with_all_obstacles(point3, point4)
+    else:
+        print('not inner cut line')
+
+def find_inner_cut(pointi, pointj, radiusi, radiusj, dis):
+        rad_add = radiusi + radiusj  # 2圓半徑和
+        if pointj[0] - pointi[0] == 0:
+            theta0 = math.pi/2
+        else:
+            theta0 = math.atan((pointj[1] - pointi[1])/(pointj[0] - pointi[0]))  # 與水平線夾角
+        if (dis > radiusi + radiusj):
+            theta1 = math.asin(rad_add/dis)
+            theta2 = theta0 - theta1 + math.pi/2
+            theta3 = theta0 + theta1 - math.pi/2
+            if (pointi[0] - pointj[0] > 0):
+                theta2 = theta2 + math.pi
+                theta3 = theta3 + math.pi
+            # 四個可能的切點
+            point5 = (pointi[0] + radiusi * math.cos(theta2),
+                      pointi[1] + radiusi * math.sin(theta2))
+            point6 = (pointj[0] + radiusj * math.cos(theta2-math.pi),
+                      pointj[1] + radiusj * math.sin(theta2-math.pi))
+            point7 = (pointi[0] + radiusi * math.cos(theta3),
+                      pointi[1] + radiusi * math.sin(theta3))
+            point8 = (pointj[0] + radiusj * math.cos(theta3-math.pi),
+                      pointj[1] + radiusj * math.sin(theta3-math.pi))
+
+            intersect_with_all_obstacles(point5, point6)
+            intersect_with_all_obstacles(point7, point8)
+        else:
+            print('not inner cut line')
 
 def obstacle_node_add_to_graph():
     for index, obstacle_points in enumerate(obstacle_node):
@@ -177,71 +232,9 @@ for i in range(0, obstacle_num):
         if radius[i] > radius[j]:
             swap = 1
             i, j = j, i
-        flag3 = 0
-        flag4 = 0
-        dis = math.sqrt((obstacle[i][0] - obstacle[j][0])
-                        ** 2 + (obstacle[i][1] - obstacle[j][1])**2)
-        rad_diff = radius[j] - radius[i]  # 2圓半徑差
-        rad_add = radius[i] + radius[j]  # 2圓半徑和
-        theta0 = math.asin(rad_diff/dis)  # 2圓間的角度
-        theta1 = math.asin(rad_add/dis)
-        theta2 = math.atan(
-            (obstacle[j][1] - obstacle[i][1])/(obstacle[j][0] - obstacle[i][0]))  # 與水平線夾角
-        # 外公切線
-        theta3 = theta0 + theta2 + math.pi/2
-        theta4 = theta2 - theta0 - math.pi/2
-        if (obstacle[i][0] - obstacle[j][0] > 0):
-            theta3 = theta3 + math.pi
-            theta4 = theta4 + math.pi
-        # 四個可能的切點
-        point1 = (obstacle[i][0] + radius[i] * math.cos(theta3),
-                  obstacle[i][1] + radius[i] * math.sin(theta3))
-        point2 = (obstacle[j][0] + radius[j] * math.cos(theta3),
-                  obstacle[j][1] + radius[j] * math.sin(theta3))
-        point3 = (obstacle[i][0] + radius[i] * math.cos(theta4),
-                  obstacle[i][1] + radius[i] * math.sin(theta4))
-        point4 = (obstacle[j][0] + radius[j] * math.cos(theta4),
-                  obstacle[j][1] + radius[j] * math.sin(theta4))
-
-        intersect_with_all_obstacles(point1, point2)
-        intersect_with_all_obstacles(point3, point4)
-
-        # 內公切線
-        if (dis == radius[i] + radius[j]):
-            point0 = (obstacle[i][0] + radius[i] * math.cos(theta2),
-                      obstacle[i][1] + radius[i] * math.sin(theta2))
-            plt.scatter(point0[0], point0[1], color='red', marker='o')
-
-            p1 = point0
-            if p1 not in point_map:
-                point_map[p1] = point_index
-                point_index = point_index + 1
-                graph.append([])  # graph 要為新的點加一個 list
-
-            p1_index = point_map[p1]
-            obstacle_node[i].append(p1)
-            obstacle_node[j].append(p1)
-        elif (dis > radius[i] + radius[j]):
-            theta5 = theta2 - theta1 + math.pi/2
-            theta6 = theta2 + theta1 - math.pi/2
-            if (obstacle[i][0] - obstacle[j][0] > 0):
-                theta5 = theta5 + math.pi
-                theta6 = theta6 + math.pi
-            # 四個可能的切點
-            point5 = (obstacle[i][0] + radius[i] * math.cos(theta5),
-                      obstacle[i][1] + radius[i] * math.sin(theta5))
-            point6 = (obstacle[j][0] + radius[j] * math.cos(theta5-math.pi),
-                      obstacle[j][1] + radius[j] * math.sin(theta5-math.pi))
-            point7 = (obstacle[i][0] + radius[i] * math.cos(theta6),
-                      obstacle[i][1] + radius[i] * math.sin(theta6))
-            point8 = (obstacle[j][0] + radius[j] * math.cos(theta6-math.pi),
-                      obstacle[j][1] + radius[j] * math.sin(theta6-math.pi))
-
-            intersect_with_all_obstacles(point5, point6)
-            intersect_with_all_obstacles(point7, point8)
-        else:
-            print('not cut line')
-
+        dis = math.sqrt((obstacle[i][0] - obstacle[j][0])** 2 + (obstacle[i][1] - obstacle[j][1])**2)
+        find_outer_cut(obstacle[i], obstacle[j], radius[i], radius[j], dis)
+        find_inner_cut(obstacle[i], obstacle[j], radius[i], radius[j], dis)
         if swap == 1:
             i, j = j, i
 
@@ -251,7 +244,7 @@ obstacle_node_add_to_graph()
 
 plt.xlim(0, 100)
 plt.ylim(0, 100)
-# plt.show()
+plt.show()
 
 print(f"總共點的數量: {point_index}")
 
