@@ -106,8 +106,8 @@ def find_outer_cut(pointi, pointj, radiusi, radiusj, dis):
         # 四個可能的切點
         point1 = (pointi[0] + radiusi * math.cos(theta2),
                 pointi[1] + radiusi * math.sin(theta2))
-        point2 = (pointj[0] + radius[j] * math.cos(theta2),
-                pointj[1] + radius[j] * math.sin(theta2))
+        point2 = (pointj[0] + radiusj * math.cos(theta2),
+                pointj[1] + radiusj * math.sin(theta2))
         point3 = (pointi[0] + radiusi * math.cos(theta3),
                 pointi[1] + radiusi * math.sin(theta3))
         point4 = (pointj[0] + radiusj * math.cos(theta3),
@@ -207,10 +207,12 @@ def dijkstra(graph, start_node, end_node):
     # Plot the path by connecting the points
     path_x = [point[0] for point in shortest_path]
     path_y = [point[1] for point in shortest_path]
-    plt.plot(path_x, path_y, linestyle='-', color='red', label='Shortest Path')
+    plt.plot(path_x, path_y)
+    find_outer_cut(obstacle[i], obstacle[j], radius[i], radius[j], dis)
+    find_inner_cut(obstacle[i], obstacle[j], radius[i], radius[j], dis)
+    if swap == 1:
+        i, j = j, i
 
-    # plt.show()
-    return (path, shortest_path)
 
 # 畫起點跟終點
 plt.scatter(start_node[0], start_node[1], color='red', marker='o')

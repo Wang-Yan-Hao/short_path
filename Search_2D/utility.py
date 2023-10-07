@@ -69,7 +69,7 @@ def intersect(p1, p2, o, r) -> bool:  # 計算 start point 到 end point 是否�
         K1 = (p1[0] + t2*v[0], p1[1] + t2*v[1])
         # plt.scatter(K[0], K[1], color='blue', marker='o')
         # plt.scatter(K1[0], K1[1], color='blue', marker='o')
-        if (t1 >= 0) & (t1 <= 1) & (t2 >= 0) & (t2 <= 1):
+        if ((t1 >= 0) and (t1 <= 1)) or ((t2 >= 0) and (t2 <= 1)):
             return 1
     # print(a,b,c,D)
     # plt.show()
