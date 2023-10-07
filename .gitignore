@@ -4,10 +4,10 @@
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
 .vscode/
-best.pt
-testvid2.mov
-testoutput13.mp4
-origin.mp4
+# best.pt
+# testvid2.mov
+# testoutput13.mp4
+# origin.mp4
 
 # User-specific files
 *.rsuser
@@ -273,13 +273,13 @@ ServiceFabricBackup/
 *.ndf
 
 # Business Intelligence projects
-*.rdl.data
-*.bim.layout
-*.bim_*.settings
-*.rptproj.rsuser
-*- [Bb]ackup.rdl
-*- [Bb]ackup ([0-9]).rdl
-*- [Bb]ackup ([0-9][0-9]).rdl
+# *.rdl.data
+# *.bim.layout
+# *.bim_*.settings
+# *.rptproj.rsuser
+# *- [Bb]ackup.rdl
+# *- [Bb]ackup ([0-9]).rdl
+# *- [Bb]ackup ([0-9][0-9]).rdl
 
 # Microsoft Fakes
 FakesAssemblies/
