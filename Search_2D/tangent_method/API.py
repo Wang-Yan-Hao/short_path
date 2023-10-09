@@ -122,24 +122,25 @@ def tangent_method(obstacles, r, s_node, e_node):
         # 如果在障礙物裡面，直接跳到圓周上, todo: 之後在改成走 step 距離
         if tmp < r[i]:
             vector = (s_node[0] - obstacles[i][0], s_node[1] - obstacles[i][1])
-            vector = (vector[0] * (1 - tmp / r[i]), vector[1] * (1 - tmp / r[i]))
+            vector = (
+                vector[0] * (1 - tmp / r[i]) * 5,
+                vector[1] * (1 - tmp / r[i]) * 5,
+            )
             s_node = (s_node[0] + vector[0], s_node[1] + vector[1])
-            return s_node
-
-    if calculate_distance(s_node, e_node) < step:
-        return e_node
-
+            return (s_node, [])
+    # main algorithm
     return_main = main(obstacles, r, s_node, e_node)
 
     # 如果找不到路徑 就不動
-    if return_main[0][0] == None:
-        return s_node
+    if return_main[0][0] == None or return_main[0][1] == None:
+        return (s_node, [])
 
-    path_index = return_main[0][0]
-    path_coordinate = return_main[0][1]
+    path_index = return_main[0][0]  # 用 index 表示的 path
+    path_coordinate = return_main[0][1]  # 用座標點表示的 path
     obstacle_node = return_main[1]
     obstacle_or_not = [-1] * len(path_index)
 
+    # 用 obstacle_or_not 紀錄這些點是否在同一障礙物上面
     for i in range(len(path_index) - 1):  # Should be range(len(my_list))
         tmp = same_obstacle(obstacle_node, path_coordinate[i], path_coordinate[i + 1])
         if tmp != -1:
@@ -147,10 +148,9 @@ def tangent_method(obstacles, r, s_node, e_node):
             obstacle_or_not[i + 1] = tmp
 
     # 回傳下一個所在的點, 每一 frame 走長度 step
-    tmp = calculate_next_point(
-        path_index, path_coordinate, obstacle_or_not, step, obstacles, r
+    return (
+        calculate_next_point(
+            path_index, path_coordinate, obstacle_or_not, step, obstacles, r
+        ),
+        path_coordinate,
     )
-
-    # 還要在轉換回去他們的座標
-    # tmp = (1250 - tmp[1], 1700 - tmp[0])
-    return tmp
