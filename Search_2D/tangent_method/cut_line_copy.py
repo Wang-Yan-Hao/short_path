@@ -26,14 +26,22 @@ def intersect_with_all_obstacles(
         ans = intersect(p1, p2, obstacle[i], radius[i])
 
         # 要跳過 p1 p2 所在的障礙物
-        if not_include_p1 and i == p2_obstacle_index:
-            continue
-        elif i == p1_obstacle_index or i == p2_obstacle_index:
+        if i == p1_obstacle_index or i == p2_obstacle_index:
             continue
 
-        if ans == 1:
+        if ans == 1:  # 撞到障礙物
             flag = 1
             break
+
+    # 如果點在任意障礙物理面
+    for i in range(0, obstacle_num):
+        if i == p1_obstacle_index or i == p2_obstacle_index:
+            continue
+        if (
+            calculate_distance(p1, obstacle[i]) < radius[i]
+            or calculate_distance(p2, obstacle[i]) < radius[i]
+        ):
+            return 1
 
     if flag == 0:  # 沒有跟任何障礙物接觸
         if not_include_p1:  # p1 是起點或者終點, 所以 p1 不用被 obstacle_node append
@@ -89,15 +97,25 @@ def find_point_cut(point, o, r, obstacle_index):  # 找點跟圓的切線
     dis = math.sqrt((point[0] - o[0]) ** 2 + (point[1] - o[1]) ** 2)
     theta = math.atan((point[1] - o[1]) / (point[0] - o[0]))
     theta1 = math.asin(r / dis)
-    point1 = (
-        o[0] + r * math.cos(theta + theta1 + math.pi / 2),
-        o[1] + r * math.sin(theta + theta1 + math.pi / 2),
-    )
-    point2 = (
-        o[0] + r * math.cos(theta - theta1 - math.pi / 2),
-        o[1] + r * math.sin(theta - theta1 - math.pi / 2),
-    )
-
+    if point[0] > o[0]:
+        point1 = (
+            o[0] + r * math.cos(theta - theta1 + math.pi / 2),
+            o[1] + r * math.sin(theta - theta1 + math.pi / 2),
+        )
+        point2 = (
+            o[0] + r * math.cos(theta + theta1 - math.pi / 2),
+            o[1] + r * math.sin(theta + theta1 - math.pi / 2),
+        )
+    else:
+        point1 = (
+            o[0] + r * math.cos(theta + theta1 + math.pi / 2),
+            o[1] + r * math.sin(theta + theta1 + math.pi / 2),
+        )
+        point2 = (
+            o[0] + r * math.cos(theta - theta1 - math.pi / 2),
+            o[1] + r * math.sin(theta - theta1 - math.pi / 2),
+        )
+    # print(point,point1,point2)
     intersect_with_all_obstacles(
         point, point1, not_include_p1=True, p2_obstacle_index=obstacle_index
     )
@@ -106,7 +124,7 @@ def find_point_cut(point, o, r, obstacle_index):  # 找點跟圓的切線
     )
 
 
-def find_outer_cut(pointi, pointj, radiusi, radiusj, dis,ob_i, ob_j):
+def find_outer_cut(pointi, pointj, radiusi, radiusj, dis, ob_i, ob_j):
     rad_diff = radiusj - radiusi
     if pointj[0] - pointi[0] == 0:
         theta0 = math.pi / 2
@@ -142,7 +160,7 @@ def find_outer_cut(pointi, pointj, radiusi, radiusj, dis,ob_i, ob_j):
         pass
 
 
-def find_inner_cut(pointi, pointj, radiusi, radiusj,dis, ob_i, ob_j):
+def find_inner_cut(pointi, pointj, radiusi, radiusj, dis, ob_i, ob_j):
     rad_add = radiusi + radiusj  # 2圓半徑和
     if pointj[0] - pointi[0] == 0:
         theta0 = math.pi / 2
@@ -233,12 +251,13 @@ def dijkstra(graph, start_node, end_node):
         return (None, None)  # Return None to indicate no valid path
 
     # Reconstruct the shortest path using the parent array
-    path = []
+    path = []  # 最短路徑, 用 index 表示
     current_node = end_node
     while current_node != -1:
         path.insert(0, current_node)  # Insert at the beginning to reverse the path
         current_node = parent[current_node]
 
+    # 最短路徑, 用作標點表示
     shortest_path = [
         point
         for index in path
@@ -246,8 +265,8 @@ def dijkstra(graph, start_node, end_node):
         if point_index == index
     ]
     # Plot the path by connecting the points
-    path_x = [point[0] for point in shortest_path]
-    path_y = [point[1] for point in shortest_path]
+    # path_x = [point[0] for point in shortest_path]
+    # path_y = [point[1] for point in shortest_path]
 
     # plt.show()
     return (path, shortest_path)
@@ -287,12 +306,12 @@ def main(obstacles, r, s_node, e_node):
                 (obstacle[i][0] - obstacle[j][0]) ** 2
                 + (obstacle[i][1] - obstacle[j][1]) ** 2
             )
-            find_outer_cut(obstacle[i], obstacle[j], radius[i], radius[j], dis,i,j)
-            find_inner_cut(obstacle[i], obstacle[j], radius[i], radius[j], dis,i,j)
+            find_outer_cut(obstacle[i], obstacle[j], radius[i], radius[j], dis, i, j)
+            find_inner_cut(obstacle[i], obstacle[j], radius[i], radius[j], dis, i, j)
             if swap == 1:
                 i, j = j, i
 
     # 同一個障礙物上面的點要連線
     obstacle_node_add_to_graph()
-
+    
     return [dijkstra(graph, 0, 1), obstacle_node]
