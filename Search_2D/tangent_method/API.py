@@ -9,9 +9,9 @@ parent_dir = os.path.join(current_dir, ".")
 sys.path.append(parent_dir)
 
 from cut_line_copy import main
-from utility import calculate_distance, vector_normal
+from utility import calculate_distance, point_in_obstacles, vector_normal
 
-step = 15
+step = 10
 
 
 def same_obstacle(obstacle_node, s, e):
@@ -110,25 +110,37 @@ def calculate_next_point(
 
 
 def tangent_method(obstacles, r, s_node, e_node):
-    # 因為他們座標跟我們不一樣
-    # s_node = (1700 - s_node[1], 1250 - s_node[0])
-    # e_node = (1700 - e_node[1], 1250 - e_node[0])
-    # for i in range(len(obstacles)):
-    #     obstacles[i] = (1700 - obstacles[i][1], 1250 - obstacles[i][0])
-
     # 先判斷起點有沒有在任意障礙物裡面
-    for i in range(len(obstacles)):
-        tmp = calculate_distance(obstacles[i], s_node)
-        # 如果在障礙物裡面，直接跳到圓周上, todo: 之後在改成走 step 距離
-        if tmp < r[i]:
-            vector = (s_node[0] - obstacles[i][0], s_node[1] - obstacles[i][1])
-            vector = (
-                vector[0] * (1 - tmp / r[i]) * 5,
-                vector[1] * (1 - tmp / r[i]) * 5,
-            )
-            s_node = (s_node[0] + vector[0], s_node[1] + vector[1])
-            return (s_node, [])
-    # main algorithm
+    tmp = point_in_obstacles(s_node, obstacles, r)
+    flag = 0
+    j = 0
+    while tmp != [] and j <= 5:
+        flag = 1
+        vector = [0.0, 0.0]
+        for i in tmp:
+            dis = calculate_distance(s_node, obstacles[i])
+            vector[0] += (s_node[0] - obstacles[i][0]) * (1 - dis / r[i])
+            vector[1] += (s_node[1] - obstacles[i][1]) * (1 - dis / r[i])
+
+        s_node = (s_node[0] + vector[0], s_node[1] + vector[1])
+        tmp = point_in_obstacles(s_node, obstacles, r)
+        j = j + 1
+        print("nice")
+    if flag:
+        return (s_node, [])
+
+    # for i in range(len(obstacles)):
+    #     tmp = calculate_distance(obstacles[i], s_node)
+    #     # 如果在障礙物裡面，直接跳到圓周上, todo: 之後在改成走 step 距離
+    #     if tmp < r[i]:
+    #         vector = (s_node[0] - obstacles[i][0], s_node[1] - obstacles[i][1])
+    #         vector = (
+    #             vector[0] * (1 - tmp / r[i]) * 2,
+    #             vector[1] * (1 - tmp / r[i]) * 2,
+    #         )
+    #         s_node = (s_node[0] + vector[0], s_node[1] + vector[1])
+    #         return (s_node, [])
+
     return_main = main(obstacles, r, s_node, e_node)
 
     # 如果找不到路徑 就不動
@@ -137,7 +149,7 @@ def tangent_method(obstacles, r, s_node, e_node):
 
     path_index = return_main[0][0]  # 用 index 表示的 path
     path_coordinate = return_main[0][1]  # 用座標點表示的 path
-    obstacle_node = return_main[1]
+    obstacle_node = return_main[1]  # 點所在的障礙物資訊
     obstacle_or_not = [-1] * len(path_index)
 
     # 用 obstacle_or_not 紀錄這些點是否在同一障礙物上面

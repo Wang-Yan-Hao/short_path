@@ -21,27 +21,25 @@ def intersect_with_all_obstacles(
 ):  # 檢查兩點是否有跟所有障礙物接觸過
     global point_index
     flag = 0
-
     for i in range(0, obstacle_num):
+        if i == p2_obstacle_index:
+            continue
         ans = intersect(p1, p2, obstacle[i], radius[i])
 
         # 要跳過 p1 p2 所在的障礙物
-        if i == p1_obstacle_index or i == p2_obstacle_index:
+        if not_include_p1 and i == p2_obstacle_index:
             continue
-
-        if ans == 1:  # 撞到障礙物
-            flag = 1
-            break
-
-    # 如果點在任意障礙物理面
-    for i in range(0, obstacle_num):
-        if i == p1_obstacle_index or i == p2_obstacle_index:
+        elif i == p1_obstacle_index or i == p2_obstacle_index:
             continue
         if (
             calculate_distance(p1, obstacle[i]) < radius[i]
             or calculate_distance(p2, obstacle[i]) < radius[i]
         ):
-            return 1
+            flag = 1
+            break
+        if ans == 1:
+            flag = 1
+            break
 
     if flag == 0:  # 沒有跟任何障礙物接觸
         if not_include_p1:  # p1 是起點或者終點, 所以 p1 不用被 obstacle_node append
@@ -288,6 +286,7 @@ def main(obstacles, r, s_node, e_node):
 
     # 畫圓形障礙物
     # draw_circles(obstacle, radius)
+    intersect_with_all_obstacles(start_node, end_node)
 
     # 找點切線
     for i in range(0, obstacle_num):
@@ -313,5 +312,5 @@ def main(obstacles, r, s_node, e_node):
 
     # 同一個障礙物上面的點要連線
     obstacle_node_add_to_graph()
-    
+
     return [dijkstra(graph, 0, 1), obstacle_node]
