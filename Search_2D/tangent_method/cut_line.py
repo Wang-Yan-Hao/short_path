@@ -30,13 +30,23 @@ def intersect_with_all_obstacles(p1, p2, not_include_p1=False, p1_obstacle_index
     global point_index
     flag = 0
     for i in range(0, obstacle_num):
+        if  i == p2_obstacle_index:
+            continue
         ans = intersect(p1, p2, obstacle[i], radius[i])
+        
+        # 要跳過 p1 p2 所在的障礙物
+        if not_include_p1 and i == p2_obstacle_index:
+            continue
+        elif i == p1_obstacle_index or i == p2_obstacle_index:
+            continue
+        if calculate_distance(p1, obstacle[i]) < radius[i] or calculate_distance(p2, obstacle[i]) < radius[i]:
+            flag = 1
+            break
         if ans == 1:
             flag = 1
             break
-
     if flag == 0:  # 沒有跟任何障礙物接觸
-        plt.plot([p2[0], p1[0]], [p2[1], p1[1]], linestyle='-', color='green')
+        #plt.plot([p2[0], p1[0]], [p2[1], p1[1]], linestyle='-', color='green')
 
         if not_include_p1:  # p1 是起點或者終點, 所以 p1 不用被 obstacle_node append
             path_len = calculate_distance(p1, p2)
@@ -81,15 +91,21 @@ def find_point_cut(point, o, r, obstacle_index):  # 找點跟圓的切線
     dis = math.sqrt((point[0] - o[0])**2 + (point[1] - o[1])**2)
     theta = math.atan((point[1] - o[1])/(point[0] - o[0]))
     theta1 = math.asin(r/dis)
-    point1 = (o[0] + r*math.cos(theta + theta1 + math.pi/2),
-              o[1] + r*math.sin(theta + theta1 + math.pi/2))
-    point2 = (o[0] + r*math.cos(theta - theta1 - math.pi/2),
-              o[1] + r*math.sin(theta - theta1 - math.pi/2))
+    if point[0] > o[0]:
+        point1 = (o[0] + r*math.cos(theta - theta1 + math.pi/2),
+                o[1] + r*math.sin(theta - theta1 + math.pi/2))
+        point2 = (o[0] + r*math.cos(theta + theta1 - math.pi/2),
+                o[1] + r*math.sin(theta + theta1 - math.pi/2))
+    else:
+        point1 = (o[0] + r*math.cos(theta + theta1 + math.pi/2),
+                o[1] + r*math.sin(theta + theta1 + math.pi/2))
+        point2 = (o[0] + r*math.cos(theta - theta1 - math.pi/2),
+                o[1] + r*math.sin(theta - theta1 - math.pi/2))
     #print(point,point1,point2)
     intersect_with_all_obstacles(point, point1, not_include_p1=True, p2_obstacle_index=obstacle_index)
     intersect_with_all_obstacles(point, point2, not_include_p1=True, p2_obstacle_index=obstacle_index)
 
-def find_outer_cut(pointi, pointj, radiusi, radiusj, dis):
+def find_outer_cut(pointi, pointj, radiusi, radiusj, dis,ob_i, ob_j):
 
     rad_diff = radiusj - radiusi
     if pointj[0] - pointi[0] == 0:
@@ -112,12 +128,12 @@ def find_outer_cut(pointi, pointj, radiusi, radiusj, dis):
                 pointi[1] + radiusi * math.sin(theta3))
         point4 = (pointj[0] + radiusj * math.cos(theta3),
                 pointj[1] + radiusj * math.sin(theta3))
-        intersect_with_all_obstacles(point1, point2)
-        intersect_with_all_obstacles(point3, point4)
+        intersect_with_all_obstacles(point1, point2, False, ob_i, ob_j)
+        intersect_with_all_obstacles(point3, point4, False, ob_i, ob_j)
     else:
-        print('not inner cut line')
+        print('not outer cut line')
 
-def find_inner_cut(pointi, pointj, radiusi, radiusj, dis):
+def find_inner_cut(pointi, pointj, radiusi, radiusj,dis, ob_i, ob_j):
         rad_add = radiusi + radiusj  # 2圓半徑和
         if pointj[0] - pointi[0] == 0:
             theta0 = math.pi/2
@@ -140,8 +156,8 @@ def find_inner_cut(pointi, pointj, radiusi, radiusj, dis):
             point8 = (pointj[0] + radiusj * math.cos(theta3-math.pi),
                       pointj[1] + radiusj * math.sin(theta3-math.pi))
 
-            intersect_with_all_obstacles(point5, point6)
-            intersect_with_all_obstacles(point7, point8)
+            intersect_with_all_obstacles(point5, point6, False, ob_i, ob_j)
+            intersect_with_all_obstacles(point7, point8, False, ob_i, ob_j)
         else:
             print('not inner cut line')
 
@@ -207,16 +223,23 @@ def dijkstra(graph, start_node, end_node):
     # Plot the path by connecting the points
     path_x = [point[0] for point in shortest_path]
     path_y = [point[1] for point in shortest_path]
-    plt.plot(path_x, path_y)
-    find_outer_cut(obstacle[i], obstacle[j], radius[i], radius[j], dis)
-    find_inner_cut(obstacle[i], obstacle[j], radius[i], radius[j], dis)
-    if swap == 1:
-        i, j = j, i
+    print(path_x,path_y)
+    plt.plot(path_x, path_y,linestyle='-',color='yellow')
 
+def draw_test_graph(graph):
+    plt.xlim(0, 2000)
+    plt.ylim(0, 2000)
+    for i in range(0,len(graph)):
+        for j in range(0, len(graph[i])):
+            point1 = [key for key, value in point_map.items() if value == i]
+            point2 = [key for key, value in point_map.items() if value == graph[i][j][0]]
+            
+            plt.plot([point1[0][0],point2[0][0]],[point1[0][1],point2[0][1]],linestyle='-',color='red')
+    plt.show()
 
 # 畫起點跟終點
 plt.scatter(start_node[0], start_node[1], color='red', marker='o')
-plt.scatter(end_node[0], end_node[1], color='red', marker='o')
+plt.scatter(end_node[0], end_node[1], color='blue', marker='o')
 
 # 畫圓形障礙物
 draw_circles(obstacle, radius)
@@ -235,8 +258,8 @@ for i in range(0, obstacle_num):
             swap = 1
             i, j = j, i
         dis = math.sqrt((obstacle[i][0] - obstacle[j][0])** 2 + (obstacle[i][1] - obstacle[j][1])**2)
-        find_outer_cut(obstacle[i], obstacle[j], radius[i], radius[j], dis)
-        find_inner_cut(obstacle[i], obstacle[j], radius[i], radius[j], dis)
+        find_outer_cut(obstacle[i], obstacle[j], radius[i], radius[j], dis,i,j)
+        find_inner_cut(obstacle[i], obstacle[j], radius[i], radius[j], dis,i,j)
         if swap == 1:
             i, j = j, i
 
@@ -244,9 +267,9 @@ for i in range(0, obstacle_num):
 # 同一個障礙物上面的點要連線
 obstacle_node_add_to_graph()
 
-plt.xlim(0, 100)
-plt.ylim(0, 100)
-plt.show()
+plt.xlim(0, 2000)
+plt.ylim(0, 2000)
+
 
 print(f"總共點的數量: {point_index}")
 
@@ -255,7 +278,9 @@ import time
 start_time = time.time()
 
 dijkstra(graph, 0, 1)
+plt.show()
 
 end_time = time.time()
 elapsed_time = end_time - start_time
 print(f"Elapsed time: {elapsed_time} seconds")
+draw_test_graph(graph)
