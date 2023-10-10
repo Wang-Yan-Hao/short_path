@@ -91,7 +91,8 @@ def intersect_with_all_obstacles(
     return 0
 
 
-def find_point_cut(point, o, r, obstacle_index):  # 找點跟圓的切線
+# 找點跟圓的切線
+def find_point_cut(point, o, r, obstacle_index):
     dis = math.sqrt((point[0] - o[0]) ** 2 + (point[1] - o[1]) ** 2)
     theta = math.atan((point[1] - o[1]) / (point[0] - o[0]))
     theta1 = math.asin(r / dis)
@@ -122,6 +123,7 @@ def find_point_cut(point, o, r, obstacle_index):  # 找點跟圓的切線
     )
 
 
+# 圓跟圓的外切點
 def find_outer_cut(pointi, pointj, radiusi, radiusj, dis, ob_i, ob_j):
     rad_diff = radiusj - radiusi
     if pointj[0] - pointi[0] == 0:
@@ -158,6 +160,7 @@ def find_outer_cut(pointi, pointj, radiusi, radiusj, dis, ob_i, ob_j):
         pass
 
 
+# 圓跟圓的內切點
 def find_inner_cut(pointi, pointj, radiusi, radiusj, dis, ob_i, ob_j):
     rad_add = radiusi + radiusj  # 2圓半徑和
     if pointj[0] - pointi[0] == 0:
@@ -286,7 +289,6 @@ def main(obstacles, r, s_node, e_node):
 
     # 畫圓形障礙物
     # draw_circles(obstacle, radius)
-    intersect_with_all_obstacles(start_node, end_node)
 
     # 找點切線
     for i in range(0, obstacle_num):
@@ -310,7 +312,10 @@ def main(obstacles, r, s_node, e_node):
             if swap == 1:
                 i, j = j, i
 
+    
     # 同一個障礙物上面的點要連線
     obstacle_node_add_to_graph()
 
+    intersect_with_all_obstacles(start_node, end_node)
+    
     return [dijkstra(graph, 0, 1), obstacle_node]

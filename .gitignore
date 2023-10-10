@@ -6,8 +6,12 @@
 .vscode/
 # best.pt
 # testvid2.mov
-# testoutput13.mp4
+testoutput13.mp4
 # origin.mp4
+Search_2D/video/BACK_1.01_step10.mp4
+Search_2D/video/BACK_1.01_step15.mp4
+Search_2D/video/BACK_not1.01_step10.mp4
+Search_2D/video/current_coor.txt
 
 # User-specific files
 *.rsuser

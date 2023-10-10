@@ -63,6 +63,11 @@ def intersect_with_all_obstacles(
             path_len = calculate_distance(p1, p2)
 
             # 為新加的點設個對應的 index
+            if p1 not in point_map:
+                point_map[p1] = point_index
+                point_index = point_index + 1
+                graph.append([])  # graph 要為新的點加一個 list
+            # 為新加的點設個對應的 index
             if p2 not in point_map:
                 point_map[p2] = point_index
                 point_index = point_index + 1
@@ -80,12 +85,12 @@ def intersect_with_all_obstacles(
             path_len = calculate_distance(p1, p2)
 
             # 新加的點設個對應的 index
-            if p2 not in point_map:
-                point_map[p2] = point_index
-                point_index = point_index + 1
-                graph.append([])  # graph 要為新的點加一個 list
             if p1 not in point_map:
                 point_map[p1] = point_index
+                point_index = point_index + 1
+                graph.append([])  # graph 要為新的點加一個 list
+            if p2 not in point_map:
+                point_map[p2] = point_index
                 point_index = point_index + 1
                 graph.append([])  # graph 要為新的點加一個 list
 
@@ -220,12 +225,6 @@ def obstacle_node_add_to_graph():
                 path_len = calculate_two_point_distance_in_circle(
                     p1, p2, obstacle[index], radius[index]
                 )
-                print("障礙物的半徑", radius[index])
-                print("障礙物上面的長度", path_len)
-                print(p1)
-                print(p2)
-                print("障礙物中心", obstacle[index])
-                print("")
                 p1_index = point_map[p1]
                 p2_index = point_map[p2]
                 graph[p1_index].append((p2_index, path_len))  # p1 加上 p2
@@ -313,6 +312,7 @@ plt.scatter(end_node[0], end_node[1], color="blue", marker="o")
 # 畫圓形障礙物
 draw_circles(obstacle, radius)
 
+
 # 找點切線
 for i in range(0, obstacle_num):
     find_point_cut(start_node, obstacle[i], radius[i], i)
@@ -339,6 +339,7 @@ for i in range(0, obstacle_num):
 # 同一個障礙物上面的點要連線
 obstacle_node_add_to_graph()
 
+intersect_with_all_obstacles(start_node, end_node)
 plt.xlim(0, 2000)
 plt.ylim(0, 2000)
 

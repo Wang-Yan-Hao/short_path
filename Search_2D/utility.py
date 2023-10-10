@@ -123,43 +123,6 @@ def intersect(
 # plt.show()
 
 
-def dijkstra(graph, start, end):
-    # Create a priority queue (min-heap) to store nodes and their distances
-    min_heap = [(0, start)]  # (distance, node)
-
-    # Create a dictionary to track the shortest distances from the start node
-    shortest_distances = {node: float("inf") for node in range(len(graph))}
-    shortest_distances[start] = 0  # Distance from start to start is 0
-
-    # Create a dictionary to store the previous node in the shortest path
-    previous_nodes = {node: None for node in range(len(graph))}
-
-    while min_heap:
-        current_distance, current_node = heapq.heappop(min_heap)
-
-        # If we have reached the end node, reconstruct and return the path
-        if current_node == end:
-            path = []
-            while current_node is not None:
-                path.insert(0, current_node)
-                current_node = previous_nodes[current_node]
-            return path
-
-        # Skip this node if we have already found a shorter path to it
-        if current_distance > shortest_distances[current_node]:
-            continue
-
-        # Explore neighbors
-        for neighbor, edge_length in graph[current_node]:
-            distance = current_distance + edge_length
-
-            if distance < shortest_distances[neighbor]:
-                shortest_distances[neighbor] = distance
-                previous_nodes[neighbor] = current_node
-                heapq.heappush(min_heap, (distance, neighbor))
-
-    # If we reach this point, there is no path from start to end
-    return None
 
 
 # 畫圓形障礙物

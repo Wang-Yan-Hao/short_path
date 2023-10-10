@@ -11,40 +11,49 @@ sys.path.append(parent_dir)
 from cut_line_copy import main
 from utility import calculate_distance, point_in_obstacles, vector_normal
 
-step = 10
+step = 15
 
 
-def same_obstacle(obstacle_node, s, e):
+def same_obstacle(obs, r, s, e):
     flag_1 = 0
     flag_2 = 0
-    for i, list in enumerate(obstacle_node):
-        for element in list:
-            if element == s:
-                flag_1 = 1
-            elif element == e:
-                flag_2 = 1
-        if flag_1 and flag_2:
-            return i
-        elif flag_1 or flag_2:
-            return -1
+
+    for index, element in enumerate(obs):
+        if (
+            calculate_distance(s, element) <= r[index]
+            and calculate_distance(e, element) <= r[index]
+        ):
+            return index
     return -1
 
+    # for index, list in enumerate(obstacle_node):
+    #     for element in list:
+    #         if element == s:
+    #             flag_1 = 1
+    #         elif element == e:
+    #             flag_2 = 1
+    #     if flag_1 and flag_2:
+    #         return index
+    #     elif flag_1 or flag_2:
+    #         return -1
+    # return -1
 
+
+# 在圓上點座標轉為極座標
 def cartesian_to_polar(x, y, circle_center):
     x0, y0 = circle_center
     theta = math.atan2(y - y0, x - x0)
     return theta
 
 
+# 下一個要移動的點, 在圓弧的線上
 def find_poiont_on_circle(center, r, point_1, point_2, length):
     # Convert Cartesian coordinates to polar coordinates
     theta1 = cartesian_to_polar(point_1[0], point_1[1], center)
     theta2 = cartesian_to_polar(point_2[0], point_2[1], center)
-
-    # Calculate the angular difference between the two points
     delta_theta = theta2 - theta1
 
-    # 圓周 英文
+    # 圓周
     circumference = r * 2 * math.pi
 
     theta_result = theta1
@@ -55,8 +64,8 @@ def find_poiont_on_circle(center, r, point_1, point_2, length):
         theta_result += length / circumference * 2 * math.pi
 
     # Calculate the coordinates of the point at the desired arc length
-    x_result = center[0] + r * math.cos(theta_result)
-    y_result = center[1] + r * math.sin(theta_result)
+    x_result = center[0] + 1.01 * r * math.cos(theta_result)
+    y_result = center[1] + 1.01 * r * math.sin(theta_result)
 
     return (x_result, y_result)
 
@@ -64,6 +73,10 @@ def find_poiont_on_circle(center, r, point_1, point_2, length):
 def calculate_next_point(
     path_index, path_coordinate, obstacle_or_not, step, obstacles, radius
 ):
+    # 到終點了
+    if len(path_coordinate) == 1:
+        return path_coordinate[0]
+
     tmp = calculate_distance(path_coordinate[0], path_coordinate[1])
 
     if (
@@ -154,7 +167,7 @@ def tangent_method(obstacles, r, s_node, e_node):
 
     # 用 obstacle_or_not 紀錄這些點是否在同一障礙物上面
     for i in range(len(path_index) - 1):  # Should be range(len(my_list))
-        tmp = same_obstacle(obstacle_node, path_coordinate[i], path_coordinate[i + 1])
+        tmp = same_obstacle(obstacles, r, path_coordinate[i], path_coordinate[i + 1])
         if tmp != -1:
             obstacle_or_not[i] = tmp
             obstacle_or_not[i + 1] = tmp
