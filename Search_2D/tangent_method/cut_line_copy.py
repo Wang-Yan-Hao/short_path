@@ -290,6 +290,10 @@ def main(obstacles, r, s_node, e_node):
     # 畫圓形障礙物
     # draw_circles(obstacle, radius)
 
+    # 起點終點有一條線, 直接 return
+    if intersect_with_all_obstacles(start_node, end_node):
+        return [dijkstra(graph, 0, 1), obstacle_node]
+
     # 找點切線
     for i in range(0, obstacle_num):
         find_point_cut(start_node, obstacle[i], radius[i], i)
@@ -312,10 +316,7 @@ def main(obstacles, r, s_node, e_node):
             if swap == 1:
                 i, j = j, i
 
-    
     # 同一個障礙物上面的點要連線
     obstacle_node_add_to_graph()
 
-    intersect_with_all_obstacles(start_node, end_node)
-    
     return [dijkstra(graph, 0, 1), obstacle_node]
