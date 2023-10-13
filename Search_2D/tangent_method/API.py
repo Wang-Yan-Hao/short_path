@@ -2,14 +2,18 @@ import math
 import os
 import sys
 
+# Multiplier of distance for UAV run out of obstacles
+run_distance_multiplier = 1.2
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.join(current_dir, "..")
 sys.path.append(parent_dir)
 parent_dir = os.path.join(current_dir, ".")
 sys.path.append(parent_dir)
 
-from Search_2D.tangent_method.cut_line import main
 from utility import calculate_distance, point_in_obstacles, vector_normal
+
+from Search_2D.tangent_method.cut_line import main
 
 
 # Determine p1 and p2 is in same obstacle circumference or not
@@ -116,8 +120,16 @@ def tangent_method(obstacles, radius, s_node, e_node, step):
         vector = [0.0, 0.0]
         for i in tmp:
             dis = calculate_distance(s_node, obstacles[i])
-            vector[0] += (s_node[0] - obstacles[i][0]) * (1 - dis / radius[i]) * 1.2
-            vector[1] += (s_node[1] - obstacles[i][1]) * (1 - dis / radius[i]) * 1.2
+            vector[0] += (
+                (s_node[0] - obstacles[i][0])
+                * (1 - dis / radius[i])
+                * run_distance_multiplier
+            )
+            vector[1] += (
+                (s_node[1] - obstacles[i][1])
+                * (1 - dis / radius[i])
+                * run_distance_multiplier
+            )
 
         s_node = (s_node[0] + vector[0], s_node[1] + vector[1])
         tmp = point_in_obstacles(s_node, obstacles, radius)
