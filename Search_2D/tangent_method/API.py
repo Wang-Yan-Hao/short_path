@@ -8,53 +8,37 @@ sys.path.append(parent_dir)
 parent_dir = os.path.join(current_dir, ".")
 sys.path.append(parent_dir)
 
-from cut_line_copy import main
+from Search_2D.tangent_method.cut_line import main
 from utility import calculate_distance, point_in_obstacles, vector_normal
 
-step = 15
 
-
-def same_obstacle(obs, r, s, e):
-    flag_1 = 0
-    flag_2 = 0
-
+# Determine p1 and p2 is in same obstacle circumference or not
+def same_obstacle(obs, rds, p1, p2):
     for index, element in enumerate(obs):
         if (
-            calculate_distance(s, element) <= r[index]
-            and calculate_distance(e, element) <= r[index]
+            calculate_distance(p1, element) <= rds[index]
+            and calculate_distance(p2, element) <= rds[index]
         ):
-            return index
+            return index  # return the index of the obstacle
     return -1
 
-    # for index, list in enumerate(obstacle_node):
-    #     for element in list:
-    #         if element == s:
-    #             flag_1 = 1
-    #         elif element == e:
-    #             flag_2 = 1
-    #     if flag_1 and flag_2:
-    #         return index
-    #     elif flag_1 or flag_2:
-    #         return -1
-    # return -1
 
-
-# 在圓上點座標轉為極座標
-def cartesian_to_polar(x, y, circle_center):
-    x0, y0 = circle_center
+# Convert point coordinates to polar coordinates
+def cartesian_to_polar(x, y, center):
+    x0, y0 = center
     theta = math.atan2(y - y0, x - x0)
     return theta
 
 
-# 下一個要移動的點, 在圓弧的線上
-def find_poiont_on_circle(center, r, point_1, point_2, length):
+# Find the point with length to point_2, it should between point_1 and point_2
+def find_next_point_on_circle(center, rds, point_1, point_2, length):
     # Convert Cartesian coordinates to polar coordinates
     theta1 = cartesian_to_polar(point_1[0], point_1[1], center)
     theta2 = cartesian_to_polar(point_2[0], point_2[1], center)
     delta_theta = theta2 - theta1
 
-    # 圓周
-    circumference = r * 2 * math.pi
+    # Circumference
+    circumference = rds * 2 * math.pi
 
     theta_result = theta1
     if delta_theta < 0:
@@ -64,8 +48,8 @@ def find_poiont_on_circle(center, r, point_1, point_2, length):
         theta_result += length / circumference * 2 * math.pi
 
     # Calculate the coordinates of the point at the desired arc length
-    x_result = center[0] + 1.01 * r * math.cos(theta_result)
-    y_result = center[1] + 1.01 * r * math.sin(theta_result)
+    x_result = center[0] + 1.01 * rds * math.cos(theta_result)
+    y_result = center[1] + 1.01 * rds * math.sin(theta_result)
 
     return (x_result, y_result)
 
@@ -73,7 +57,7 @@ def find_poiont_on_circle(center, r, point_1, point_2, length):
 def calculate_next_point(
     path_index, path_coordinate, obstacle_or_not, step, obstacles, radius
 ):
-    # 到終點了
+    # Arrive end point
     if len(path_coordinate) == 1:
         return path_coordinate[0]
 
@@ -83,7 +67,7 @@ def calculate_next_point(
         obstacle_or_not[0] != -1
         and obstacle_or_not[1] != -1
         and obstacle_or_not[0] == obstacle_or_not[1]
-    ):  # 先走弧線
+    ):  # Run in the arc path first
         if tmp < step:
             step -= tmp
             path_index.pop(0)
@@ -93,14 +77,14 @@ def calculate_next_point(
                 path_index, path_coordinate, obstacle_or_not, step, obstacles, radius
             )
         else:
-            return find_poiont_on_circle(
+            return find_next_point_on_circle(
                 obstacles[obstacle_or_not[0]],
                 radius[obstacle_or_not[0]],
                 path_coordinate[0],
                 path_coordinate[1],
                 step,
             )
-    else:  # 先走直線
+    else:  # Run in the straight path first
         if tmp < step:
             step -= tmp
             path_index.pop(0)
@@ -122,60 +106,50 @@ def calculate_next_point(
             )
 
 
-def tangent_method(obstacles, r, s_node, e_node):
-    # 先判斷起點有沒有在任意障礙物裡面
-    tmp = point_in_obstacles(s_node, obstacles, r)
+def tangent_method(obstacles, radius, s_node, e_node, step):
+    # Make sure s_node isn't in any obstacle's danger area, if in, leave the obstacle first.
+    tmp = point_in_obstacles(s_node, obstacles, radius)
     flag = 0
-    j = 0
-    while tmp != [] and j <= 5:
+    count = 0
+    while tmp != [] and count <= 5:
         flag = 1
         vector = [0.0, 0.0]
         for i in tmp:
             dis = calculate_distance(s_node, obstacles[i])
-            vector[0] += (s_node[0] - obstacles[i][0]) * (1 - dis / r[i])
-            vector[1] += (s_node[1] - obstacles[i][1]) * (1 - dis / r[i])
+            vector[0] += (s_node[0] - obstacles[i][0]) * (1 - dis / radius[i]) * 1.2
+            vector[1] += (s_node[1] - obstacles[i][1]) * (1 - dis / radius[i]) * 1.2
 
         s_node = (s_node[0] + vector[0], s_node[1] + vector[1])
-        tmp = point_in_obstacles(s_node, obstacles, r)
-        j = j + 1
-        print("nice")
+        tmp = point_in_obstacles(s_node, obstacles, radius)
+        count = count + 1
     if flag:
         return (s_node, [])
 
-    # for i in range(len(obstacles)):
-    #     tmp = calculate_distance(obstacles[i], s_node)
-    #     # 如果在障礙物裡面，直接跳到圓周上, todo: 之後在改成走 step 距離
-    #     if tmp < r[i]:
-    #         vector = (s_node[0] - obstacles[i][0], s_node[1] - obstacles[i][1])
-    #         vector = (
-    #             vector[0] * (1 - tmp / r[i]) * 2,
-    #             vector[1] * (1 - tmp / r[i]) * 2,
-    #         )
-    #         s_node = (s_node[0] + vector[0], s_node[1] + vector[1])
-    #         return (s_node, [])
+    # Find path
+    return_main = main(obstacles, radius, s_node, e_node)
 
-    return_main = main(obstacles, r, s_node, e_node)
-
-    # 如果找不到路徑 就不動
+    # If no path find, don't move
     if return_main[0][0] == None or return_main[0][1] == None:
         return (s_node, [])
 
-    path_index = return_main[0][0]  # 用 index 表示的 path
-    path_coordinate = return_main[0][1]  # 用座標點表示的 path
-    obstacle_node = return_main[1]  # 點所在的障礙物資訊
+    path_index = return_main[0][0]  # Path with index represent
+    path_coordinate = return_main[0][1]  # Path with coordinate represent
+    obstacle_node = return_main[1]
     obstacle_or_not = [-1] * len(path_index)
 
-    # 用 obstacle_or_not 紀錄這些點是否在同一障礙物上面
-    for i in range(len(path_index) - 1):  # Should be range(len(my_list))
-        tmp = same_obstacle(obstacles, r, path_coordinate[i], path_coordinate[i + 1])
+    # Record if the point on the path is in the same obstacle as the next point or not
+    for i in range(len(path_coordinate) - 1):  # Should be range(len(my_list))
+        tmp = same_obstacle(
+            obstacles, radius, path_coordinate[i], path_coordinate[i + 1]
+        )
         if tmp != -1:
             obstacle_or_not[i] = tmp
             obstacle_or_not[i + 1] = tmp
 
-    # 回傳下一個所在的點, 每一 frame 走長度 step
+    # Return the next point UAV move with "step" distance
     return (
         calculate_next_point(
-            path_index, path_coordinate, obstacle_or_not, step, obstacles, r
+            path_index, path_coordinate, obstacle_or_not, step, obstacles, radius
         ),
         path_coordinate,
     )

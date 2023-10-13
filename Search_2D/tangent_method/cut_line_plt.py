@@ -3,17 +3,33 @@ import math
 import os
 import sys
 
+import matplotlib.pyplot as plt
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.join(current_dir, "..")
 sys.path.append(parent_dir)
 
-# from obstacle import middle_point_list, radius_list, s_goal, s_start
+from obstacle import middle_point_list, radius_list, s_goal, s_start
 from utility import (
     calculate_distance,
     calculate_two_point_distance_in_circle,
     draw_circles,
     intersect,
 )
+
+# Globval variable
+obstacle = middle_point_list
+radius = radius_list
+start_node = s_start
+end_node = s_goal
+obstacle_num = len(obstacle)
+fig = plt.figure
+
+# Graph
+point_map = {start_node: 0, end_node: 1}  # 每個點對應的 index
+graph = [[], []]  # 正常的 graph list, index 0 是起點, index 1 是終點
+point_index = 2  # 目前總共的點
+obstacle_node = [[] for _ in range(obstacle_num)]  # 同一個障礙物上面的點會存在一起
 
 
 def intersect_with_all_obstacles(
@@ -40,8 +56,9 @@ def intersect_with_all_obstacles(
         if ans == 1:
             flag = 1
             break
-
     if flag == 0:  # 沒有跟任何障礙物接觸
+        plt.plot([p2[0], p1[0]], [p2[1], p1[1]], linestyle="-", color="green")
+
         if not_include_p1:  # p1 是起點或者終點, 所以 p1 不用被 obstacle_node append
             path_len = calculate_distance(p1, p2)
 
@@ -50,6 +67,7 @@ def intersect_with_all_obstacles(
                 point_map[p1] = point_index
                 point_index = point_index + 1
                 graph.append([])  # graph 要為新的點加一個 list
+            # 為新加的點設個對應的 index
             if p2 not in point_map:
                 point_map[p2] = point_index
                 point_index = point_index + 1
@@ -91,8 +109,7 @@ def intersect_with_all_obstacles(
     return 0
 
 
-# 找點跟圓的切線
-def find_point_cut(point, o, r, obstacle_index):
+def find_point_cut(point, o, r, obstacle_index):  # 找點跟圓的切線
     dis = math.sqrt((point[0] - o[0]) ** 2 + (point[1] - o[1]) ** 2)
     theta = math.atan((point[1] - o[1]) / (point[0] - o[0]))
     theta1 = math.asin(r / dis)
@@ -123,7 +140,6 @@ def find_point_cut(point, o, r, obstacle_index):
     )
 
 
-# 圓跟圓的外切點
 def find_outer_cut(pointi, pointj, radiusi, radiusj, dis, ob_i, ob_j):
     rad_diff = radiusj - radiusi
     if pointj[0] - pointi[0] == 0:
@@ -157,10 +173,9 @@ def find_outer_cut(pointi, pointj, radiusi, radiusj, dis, ob_i, ob_j):
         intersect_with_all_obstacles(point1, point2, False, ob_i, ob_j)
         intersect_with_all_obstacles(point3, point4, False, ob_i, ob_j)
     else:
-        pass
+        print("not outer cut line")
 
 
-# 圓跟圓的內切點
 def find_inner_cut(pointi, pointj, radiusi, radiusj, dis, ob_i, ob_j):
     rad_add = radiusi + radiusj  # 2圓半徑和
     if pointj[0] - pointi[0] == 0:
@@ -195,7 +210,7 @@ def find_inner_cut(pointi, pointj, radiusi, radiusj, dis, ob_i, ob_j):
         intersect_with_all_obstacles(point5, point6, False, ob_i, ob_j)
         intersect_with_all_obstacles(point7, point8, False, ob_i, ob_j)
     else:
-        pass
+        print("not inner cut line")
 
 
 def obstacle_node_add_to_graph():
@@ -249,16 +264,15 @@ def dijkstra(graph, start_node, end_node):
 
     # Check if there is no valid path to the end_node
     if distances[end_node] == float("inf"):
-        return (None, None)  # Return None to indicate no valid path
+        return None  # Return None to indicate no valid path
 
     # Reconstruct the shortest path using the parent array
-    path = []  # 最短路徑, 用 index 表示
+    path = []
     current_node = end_node
     while current_node != -1:
         path.insert(0, current_node)  # Insert at the beginning to reverse the path
         current_node = parent[current_node]
 
-    # 最短路徑, 用作標點表示
     shortest_path = [
         point
         for index in path
@@ -266,57 +280,81 @@ def dijkstra(graph, start_node, end_node):
         if point_index == index
     ]
     # Plot the path by connecting the points
-    # path_x = [point[0] for point in shortest_path]
-    # path_y = [point[1] for point in shortest_path]
+    path_x = [point[0] for point in shortest_path]
+    path_y = [point[1] for point in shortest_path]
+    print(path_x, path_y)
+    plt.plot(path_x, path_y, linestyle="-", color="yellow")
 
-    # plt.show()
-    return (path, shortest_path)
 
+def draw_test_graph(graph):
+    plt.xlim(0, 2000)
+    plt.ylim(0, 2000)
+    for i in range(0, len(graph)):
+        for j in range(0, len(graph[i])):
+            point1 = [key for key, value in point_map.items() if value == i]
+            point2 = [
+                key for key, value in point_map.items() if value == graph[i][j][0]
+            ]
 
-def main(obstacles, r, s_node, e_node):
-    # 重製全域變數
-    global point_map, graph, point_index, obstacle_node, obstacle, radius, start_node, end_node, obstacle_num
-    obstacle = obstacles
-    radius = r
-    start_node = s_node
-    end_node = e_node
-    obstacle_num = len(obstacle)
-
-    point_map = {start_node: 0, end_node: 1}  # 每個點對應的 index
-    graph = [[], []]  # 正常的 graph list, index 0 是起點, index 1 是終點
-    point_index = 2  # 目前總共的點
-    obstacle_node = [[] for _ in range(obstacle_num)]  # 同一個障礙物上面的點會存在一起
-
-    # 畫圓形障礙物
-    # draw_circles(obstacle, radius)
-
-    # 起點終點有一條線, 直接 return
-    if intersect_with_all_obstacles(start_node, end_node):
-        return [dijkstra(graph, 0, 1), obstacle_node]
-
-    # 找點切線
-    for i in range(0, obstacle_num):
-        find_point_cut(start_node, obstacle[i], radius[i], i)
-        find_point_cut(end_node, obstacle[i], radius[i], i)
-
-    # 找 2 圓切線
-    for i in range(0, obstacle_num):
-        for j in range(i + 1, obstacle_num):
-            swap = 0
-            # i 障礙物的半徑比 j 障礙物小
-            if radius[i] > radius[j]:
-                swap = 1
-                i, j = j, i
-            dis = math.sqrt(
-                (obstacle[i][0] - obstacle[j][0]) ** 2
-                + (obstacle[i][1] - obstacle[j][1]) ** 2
+            plt.plot(
+                [point1[0][0], point2[0][0]],
+                [point1[0][1], point2[0][1]],
+                linestyle="-",
+                color="red",
             )
-            find_outer_cut(obstacle[i], obstacle[j], radius[i], radius[j], dis, i, j)
-            find_inner_cut(obstacle[i], obstacle[j], radius[i], radius[j], dis, i, j)
-            if swap == 1:
-                i, j = j, i
+    plt.show()
 
-    # 同一個障礙物上面的點要連線
-    obstacle_node_add_to_graph()
 
-    return [dijkstra(graph, 0, 1), obstacle_node]
+# 畫起點跟終點
+plt.scatter(start_node[0], start_node[1], color="red", marker="o")
+plt.scatter(end_node[0], end_node[1], color="blue", marker="o")
+
+# 畫圓形障礙物
+draw_circles(obstacle, radius)
+
+
+# 找點切線
+for i in range(0, obstacle_num):
+    find_point_cut(start_node, obstacle[i], radius[i], i)
+    find_point_cut(end_node, obstacle[i], radius[i], i)
+
+# 找 2 圓切線
+for i in range(0, obstacle_num):
+    for j in range(i + 1, obstacle_num):
+        swap = 0
+        # i 障礙物的半徑比 j 障礙物小
+        if radius[i] > radius[j]:
+            swap = 1
+            i, j = j, i
+        dis = math.sqrt(
+            (obstacle[i][0] - obstacle[j][0]) ** 2
+            + (obstacle[i][1] - obstacle[j][1]) ** 2
+        )
+        find_outer_cut(obstacle[i], obstacle[j], radius[i], radius[j], dis, i, j)
+        find_inner_cut(obstacle[i], obstacle[j], radius[i], radius[j], dis, i, j)
+        if swap == 1:
+            i, j = j, i
+
+
+# 同一個障礙物上面的點要連線
+obstacle_node_add_to_graph()
+
+intersect_with_all_obstacles(start_node, end_node)
+plt.xlim(0, 2000)
+plt.ylim(0, 2000)
+
+
+print(f"總共點的數量: {point_index}")
+
+import time
+
+# Record the start time
+start_time = time.time()
+
+dijkstra(graph, 0, 1)
+plt.show()
+
+end_time = time.time()
+elapsed_time = end_time - start_time
+print(f"Elapsed time: {elapsed_time} seconds")
+# draw_test_graph(graph)
