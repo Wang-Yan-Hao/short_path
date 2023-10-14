@@ -5,6 +5,8 @@ import sys
 
 import matplotlib.pyplot as plt
 
+possible_path = True
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.join(current_dir, "..")
 sys.path.append(parent_dir)
@@ -35,7 +37,7 @@ obstacle_node = [[] for _ in range(obstacle_num)]  # 同一個障礙物上面的
 def intersect_with_all_obstacles(
     p1, p2, not_include_p1=False, p1_obstacle_index=-1, p2_obstacle_index=-1
 ):  # 檢查兩點是否有跟所有障礙物接觸過
-    global point_index
+    global point_index, possible_path
     flag = 0
     for i in range(0, obstacle_num):
         if i == p2_obstacle_index:
@@ -57,7 +59,11 @@ def intersect_with_all_obstacles(
             flag = 1
             break
     if flag == 0:  # 沒有跟任何障礙物接觸
-        plt.plot([p2[0], p1[0]], [p2[1], p1[1]], linestyle="-", color="green")
+        if possible_path:
+            plt.plot([p2[0], p1[0]], [p2[1], p1[1]], linestyle="-", color="green", label="Possible path")
+            possible_path = False
+        else:
+            plt.plot([p2[0], p1[0]], [p2[1], p1[1]], linestyle="-", color="green")
 
         if not_include_p1:  # p1 是起點或者終點, 所以 p1 不用被 obstacle_node append
             path_len = calculate_distance(p1, p2)
@@ -283,7 +289,7 @@ def dijkstra(graph, start_node, end_node):
     path_x = [point[0] for point in shortest_path]
     path_y = [point[1] for point in shortest_path]
     print(path_x, path_y)
-    plt.plot(path_x, path_y, linestyle="-", color="yellow")
+    plt.plot(path_x, path_y, linestyle="-", color="red", label="Shortest path")
 
 
 def draw_test_graph(graph):
@@ -306,8 +312,8 @@ def draw_test_graph(graph):
 
 
 # 畫起點跟終點
-plt.scatter(start_node[0], start_node[1], color="red", marker="o")
-plt.scatter(end_node[0], end_node[1], color="blue", marker="o")
+plt.scatter(start_node[0], start_node[1], color="black", marker="o", label="Start point")
+plt.scatter(end_node[0], end_node[1], color="blue", marker="o", label="End point")
 
 # 畫圓形障礙物
 draw_circles(obstacle, radius)
@@ -352,6 +358,7 @@ import time
 start_time = time.time()
 
 dijkstra(graph, 0, 1)
+plt.legend(loc='upper left')
 plt.show()
 
 end_time = time.time()
