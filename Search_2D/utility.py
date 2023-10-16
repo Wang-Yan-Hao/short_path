@@ -3,6 +3,10 @@ import math
 import matplotlib.pyplot as plt
 
 
+def vector_normal(vector, magnitude, length):
+    return (vector[0] / magnitude * length, vector[1] / magnitude * length)
+
+
 # Euclidean distance
 def calculate_distance(point1, point2):
     """
