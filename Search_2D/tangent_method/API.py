@@ -13,7 +13,7 @@ sys.path.append(parent_dir)
 
 from utility import calculate_distance, point_in_obstacles, vector_normal
 
-from Search_2D.tangent_method.cut_line import main
+from tangent_method.cut_line import main
 
 
 # Determine p1 and p2 is in same obstacle circumference or not
